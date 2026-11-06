@@ -20,6 +20,7 @@ dependencies = [
 clickhouse = ["clickhouse-connect"]
 web = ["trafilatura"]
 all = ["clickhouse-connect", "trafilatura"]
+test = ["reportlab"]      # génération des PDF de test
 
 [project.scripts]
 agentic-search = "agentic_search.__main__:main"
