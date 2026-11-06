@@ -177,10 +177,19 @@ def make_llm(cfg: dict, provider=None, model=None) -> LLM:
     raise LLMError(f"fournisseur inconnu : {provider}")
 
 
-def make_dates_llm(cfg: dict) -> LLM:
-    """Modèle léger dédié à la détection des dates (section [dates] de la configuration)."""
-    d = cfg["dates"]
+def _light_llm(cfg: dict, section: str, max_tokens: int) -> LLM:
+    d = cfg[section]
     sub = dict(cfg)
     sub["llm"] = {**cfg["llm"], "provider": d["provider"], "model": d["model"],
-                  "base_url": d.get("base_url", ""), "max_tokens": 200}
+                  "base_url": d.get("base_url", ""), "max_tokens": max_tokens}
     return make_llm(sub)
+
+
+def make_dates_llm(cfg: dict) -> LLM:
+    """Modèle léger dédié à la détection des dates (section [dates] de la configuration)."""
+    return _light_llm(cfg, "dates", 200)
+
+
+def make_themes_llm(cfg: dict) -> LLM:
+    """Modèle léger dédié aux étiquettes de thèmes (section [themes] de la configuration)."""
+    return _light_llm(cfg, "themes", 200)

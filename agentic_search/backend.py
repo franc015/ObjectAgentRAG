@@ -33,6 +33,8 @@ class SearchBackend(ABC):
     """Contrat que les outils de l'agent attendent, quel que soit le stockage."""
 
     name = "abstract"
+    # Fonctions facultatives : "themes" (filtre par thème) et "markdown" (get_document).
+    capabilities: frozenset = frozenset()
 
     @abstractmethod
     def search(self, query: str, limit: int = 5, doc_type: str | None = None,
@@ -70,13 +72,24 @@ class SearchBackend(ABC):
 # --- format neutre produit par l'ingestion ---------------------------------
 
 def write_neutral(data_dir: str | Path, documents: list[dict], passages: list[dict]) -> None:
+    """Écrit documents.json, passages.jsonl et, pour les documents qui portent du markdown,
+    un fichier `markdown/<id>.md` par document (à lire ou à comparer directement sur le disque)."""
     d = Path(data_dir)
     d.mkdir(parents=True, exist_ok=True)
     with open(d / "documents.json", "w", encoding="utf-8") as f:
-        json.dump(documents, f, ensure_ascii=False, indent=1)
+        json.dump([{k: v for k, v in doc.items() if k != "markdown"} for doc in documents],
+                  f, ensure_ascii=False, indent=1)
     with open(d / "passages.jsonl", "w", encoding="utf-8") as f:
         for p in passages:
             f.write(json.dumps(p, ensure_ascii=False) + "\n")
+    md_dir = d / "markdown"
+    for old in md_dir.glob("*.md") if md_dir.is_dir() else []:
+        old.unlink()                      # on ne garde pas le contenu d'une ingestion précédente
+    with_md = [doc for doc in documents if "markdown" in doc]
+    if with_md:
+        md_dir.mkdir(exist_ok=True)
+        for doc in with_md:
+            (md_dir / f"{doc['id']}.md").write_text(doc["markdown"], encoding="utf-8")
 
 
 def read_neutral(data_dir: str | Path) -> tuple[list[dict], list[dict]]:
@@ -85,4 +98,8 @@ def read_neutral(data_dir: str | Path) -> tuple[list[dict], list[dict]]:
         documents = json.load(f)
     with open(d / "passages.jsonl", encoding="utf-8") as f:
         passages = [json.loads(line) for line in f if line.strip()]
+    for doc in documents:
+        path = d / "markdown" / f"{doc['id']}.md"
+        if path.is_file():
+            doc["markdown"] = path.read_text(encoding="utf-8")
     return documents, passages

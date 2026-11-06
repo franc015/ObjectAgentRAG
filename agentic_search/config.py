@@ -16,9 +16,17 @@ DEFAULTS: dict = {
         "timeout": 120,
     },
     "agent": {"max_turns": 8, "max_results": 5, "max_per_doc": 3, "tool_result_chars": 12000},
-    "ingest": {"passage_words": 250, "overlap_words": 40},
+    "ingest": {"passage_words": 250, "overlap_words": 40,
+               "keep_markdown": False,    # True : conserve le markdown complet et des métadonnées (ClickHouse)
+               "keep_figures": False,     # True (avec keep_markdown) : repère et conserve les figures des articles
+               "figures_min_px": 120, "figures_max_per_doc": 40},
     "dates": {"mode": "llm", "provider": "anthropic", "model": "claude-haiku-5-5", "base_url": "",
               "head_chars": 1500, "tail_chars": 500},   # mode : "llm" ou "none"
+    "themes": {"mode": "none", "provider": "anthropic", "model": "claude-haiku-5-5", "base_url": "",
+               "max_themes": 3, "excerpt_chars": 2500,        # mode : "llm" ou "none"
+               "vocabulary": ["cybersécurité", "data", "delivery", "CI/CD", "IA agentique", "architecture",
+                              "java", "web services", "intégration", "IA générative", "cloud",
+                              "gouvernance et conformité"]},
     "backend": {"kind": "memory"},       # "memory" ou "clickhouse"
     "clickhouse": {
         "host": "localhost", "port": 8123, "username": "default",
@@ -58,6 +66,8 @@ def load_config(path: str | None = None) -> dict:
         cfg["llm"]["model"] = env["AGENTIC_MODEL"]
     if env.get("AGENTIC_DATES_MODE"):
         cfg["dates"]["mode"] = env["AGENTIC_DATES_MODE"]
+    if env.get("AGENTIC_THEMES_MODE"):
+        cfg["themes"]["mode"] = env["AGENTIC_THEMES_MODE"]
     if env.get("AGENTIC_DATES_BASE_URL"):
         cfg["dates"]["base_url"] = env["AGENTIC_DATES_BASE_URL"]
     if env.get("AGENTIC_LLM_BASE_URL"):

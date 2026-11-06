@@ -21,6 +21,10 @@ tool_result_chars = 12000
 [ingest]
 passage_words = 250
 overlap_words = 40
+keep_markdown = true              # conserve le markdown complet + métadonnées JSON (permet `reindex` et get_document)
+keep_figures = true               # repère les figures (Word, PDF raster, EPUB, web) ; images dans data/figures/
+figures_min_px = 120              # écarte logos et icônes plus petits
+figures_max_per_doc = 40
 
 [dates]
 mode = "llm"                      # "llm" : un modèle léger lit l'en-tête/la fin du texte ; "none" : métadonnées seules
@@ -29,6 +33,16 @@ model = "claude-haiku-5-5"
 base_url = ""
 head_chars = 1500                 # extrait envoyé au modèle : début et fin du document
 tail_chars = 500
+
+[themes]
+mode = "llm"                      # un modèle léger attribue des thèmes choisis dans le vocabulaire ci-dessous ; "none" : aucun
+provider = "anthropic"
+model = "claude-haiku-5-5"
+base_url = ""
+max_themes = 3
+excerpt_chars = 2500
+vocabulary = ["cybersécurité", "data", "delivery", "CI/CD", "IA agentique", "architecture", "java",
+              "web services", "intégration", "IA générative", "cloud", "gouvernance et conformité"]
 
 [backend]
 kind = "clickhouse"

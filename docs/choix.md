@@ -41,9 +41,47 @@ ce qui a été vérifié dans des sources, et ce qui reste à valider.
 - La normalisation française (accents, pluriels, mots vides) est faite en Python, une seule fois, par le
   même module pour l'indexation et la requête : les deux applications donnent des résultats comparables.
 
+## Variante ClickHouse : contenu, métadonnées et thèmes
+
+- Pour comparer le retrieval (et non la transformation en markdown), les deux applications produisent les
+  mêmes passages : mêmes réglages `keep_markdown` / `keep_figures`, markdown écrit sur disque dans
+  `data/markdown/<id>.md` par les deux. Le plus sûr est d'ingérer une seule fois, puis de charger le même
+  `data/` dans les deux (`agentic-search load` pour ClickHouse ; le backend mémoire relit `data/`).
+  Les métadonnées JSON et les thèmes ne sont stockés que par ClickHouse ; ils ne changent pas les passages.
+- Le markdown complet est dans une table séparée `documents_contenu` (ZSTD) : une correction de date ou de
+  thème ne réécrit pas le texte. Il permet `reindex` (reconstruire passages et postings sans relire les
+  fichiers) et l'outil `get_document` (lecture d'un article par tranches).
+- Les métadonnées variables (fichier, empreinte, URL, site, langue) sont dans une colonne `meta` de type
+  JSON (production depuis la 25.3, repli en String avant) ; les champs de tri et de filtre restent en colonnes typées.
+- Les thèmes sont attribués par un modèle léger, uniquement dans un vocabulaire contrôlé modifiable, et
+  corrigeables à la main (`set-themes`). Le filtre est un « au moins un des thèmes ».
+- Les figures (images) sont repérées dans les Word, PDF (images raster), EPUB et pages web. Les fichiers
+  restent sur disque (`data/figures/<document>/<empreinte>.<ext>`), le markdown les référence par une ligne
+  `![légende](chemin)` et ClickHouse stocke leurs métadonnées (`documents_figures`). La légende est indexée
+  (« Figure : … »), jamais le chemin. Pour le web, seule l'adresse est conservée (aucun téléchargement).
+  Non repérés : schémas vectoriels des PDF, formes et SmartArt Word, texte à l'intérieur des images (OCR).
+- Les corrections passent par de nouvelles versions de ligne (ReplacingMergeTree) ; les mises à jour
+  légères (`UPDATE`) sont évitées tant que la documentation les indique en bêta.
+
+## Ingestion incrémentale
+
+- La transformation des fichiers (extraction, markdown, découpage) se fait à l'ingestion, jamais à la
+  recherche. `ingest` ne relit que les fichiers nouveaux ou modifiés (empreinte SHA-256 dans
+  `data/manifest.json`) ; les autres sont repris tels quels, avec leurs passages et leur markdown. Les fichiers
+  supprimés sont retirés, ainsi que leurs images. Un lien déjà ingéré n'est pas retéléchargé.
+- Un changement de réglages (taille des passages, figures, modèles de dates ou de thèmes, vocabulaire)
+  provoque un retraitement complet, de même que `--full`. Les caches de dates et de thèmes évitent de
+  rappeler les modèles.
+- Limite : les corrections faites dans ClickHouse (`set-date`, `set-themes`) ne sont pas écrites dans
+  `data/` ; un `ingest` ou un `load` les écrase. Celles de la version de base (`set-date`) sont écrites dans
+  `data/documents.json` et conservées pour les fichiers inchangés.
+- Le chargement dans ClickHouse reste complet à chaque `ingest` (rapide, sans relire les sources).
+
 ## Non validé (à faire en premier)
 
-1. Le **SQL ClickHouse** n'a jamais été exécuté contre un vrai serveur : lancer `ch-selftest`.
+1. Le **SQL ClickHouse** n'a jamais été exécuté contre un vrai serveur : lancer `ch-selftest` (il vérifie
+   aussi l'aller-retour des thèmes, des métadonnées JSON et du markdown, le filtre par thème, la lecture par
+   tranches et la réindexation).
 2. Les **appels aux API de modèles** sont testés contre un faux serveur, pas contre les API réelles.
 3. Les **Dockerfile** et **docker-compose** n'ont pas été construits (pas de démon Docker disponible lors
    de la préparation) ; le tag `clickhouse/clickhouse-server:26.3` est à vérifier sur Docker Hub.

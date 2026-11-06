@@ -39,3 +39,22 @@ Prérequis : ClickHouse ≥ 26.2 (l'index de texte y est en disponibilité gén�
 recommandée). Sur un serveur plus ancien, le service fonctionne sans index de texte.
 
 Détail du schéma, des requêtes d'analyse des traces et des limites : [README racine](../../README.md).
+
+## Contenu, métadonnées et thèmes
+
+Cette application conserve le markdown complet de chaque document, des métadonnées JSON et des thèmes
+(vocabulaire dans `[themes]` de `config.toml`, attribués par un modèle léger) :
+
+```bash
+agentic-search ingest corpus/                     # thèmes + markdown + métadonnées (--no-themes pour s'en passer)
+agentic-search docs --theme java --theme "CI/CD"  # documents portant au moins l'un des thèmes
+agentic-search set-themes <id> "java, CI/CD"      # correction manuelle (vocabulaire contrôlé)
+agentic-search reindex --words 200                # reconstruit passages et postings depuis le markdown
+agentic-search stats                              # répartition par thème, documents sans thème
+```
+
+Les figures des articles sont aussi repérées (`agentic-search figures <id>`) : fichiers dans `data/figures/`,
+références `![légende](chemin)` dans le markdown, métadonnées dans la table `documents_figures`.
+
+L'agent dispose alors du paramètre `themes` (outils `search` et `list_documents`) et de l'outil
+`get_document` pour lire un article par tranches.

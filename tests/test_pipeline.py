@@ -16,7 +16,7 @@ from agentic_search.llm import AnthropicLLM, LLM, LLMError, OpenAICompatLLM, Tur
 from agentic_search.memory_backend import MemoryBackend
 from agentic_search.server import make_server
 from agentic_search.text import normalize, tokenize
-from agentic_search.tools import Toolbox
+from agentic_search.tools import SCHEMAS, Toolbox
 from agentic_search.tracing import JsonlTracer
 
 from fixtures import build_corpus, fake_fetch
@@ -302,7 +302,7 @@ HIST = [
     {"role": "tool_results", "results": [{"id": "toolu_1", "name": "search", "content": '{"résultats": []}'}],
      "note": "Réponds maintenant."},
 ]
-SCHEMA = Toolbox.schemas
+SCHEMA = SCHEMAS
 
 
 class TestLLMWire(unittest.TestCase):
