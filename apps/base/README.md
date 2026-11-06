@@ -19,6 +19,19 @@ agentic-search --config apps/base/config.toml ask "votre question" -v
 agentic-search --config apps/base/config.toml serve
 ```
 
+## Ajouter des articles
+
+Déposez les fichiers dans le dossier du corpus (ou ajoutez des liens dans `urls.txt`) puis relancez la même
+commande `ingest` : elle est incrémentale et ne traite que ce qui est nouveau ou modifié (`--full` pour tout
+retraiter).
+
+## Où sont les fichiers markdown
+
+Dans `data/markdown/<id>.md` (un fichier par document), avec les figures dans `data/figures/`. Ce sont les
+mêmes réglages et les mêmes passages que dans l'application ClickHouse, pour comparer le retrieval et non la
+transformation en markdown. Pour être sûr d'indexer exactement la même chose : ingérer une seule fois, puis
+charger ce même `data/` dans ClickHouse avec `agentic-search --config apps/clickhouse/config.toml load`.
+
 ## Avec Docker
 
 Voir l'en-tête de `docker-compose.yml`. Le build n'a pas pu être testé dans l'environnement où le dépôt a

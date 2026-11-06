@@ -22,6 +22,12 @@ tool_result_chars = 12000
 [ingest]
 passage_words = 250
 overlap_words = 40
+# Mêmes réglages que l'application ClickHouse : les deux versions indexent exactement les mêmes passages,
+# pour que la comparaison porte sur le retrieval et non sur la transformation en markdown.
+keep_markdown = true              # un fichier data/markdown/<id>.md par document
+keep_figures = true               # figures dans data/figures/, légendes indexées
+figures_min_px = 120
+figures_max_per_doc = 40
 
 [dates]
 mode = "llm"                      # "llm" : un modèle léger lit l'en-tête/la fin du texte ; "none" : métadonnées seules

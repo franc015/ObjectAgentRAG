@@ -99,7 +99,7 @@ class TestClickHousePlumbing(unittest.TestCase):
         b = self.make()
         b.load(PASSAGES, DOCS)
         self.assertEqual([c for c in self.fake.commands if c.startswith("TRUNCATE")],
-                         [f"TRUNCATE TABLE `test_db`.`{t}`" for t in ("documents", "passages", "postings")])
+                         [f"TRUNCATE TABLE `test_db`.`{t}`" for t in ("documents", "documents_contenu", "documents_figures", "passages", "postings")])
         by_table = {t: (cols, rows) for t, db, cols, rows in self.fake.inserts}
         self.assertEqual({db for _, db, _, _ in self.fake.inserts}, {"test_db"})
         dcols, drows = by_table["documents"]
@@ -126,7 +126,7 @@ class TestClickHousePlumbing(unittest.TestCase):
             ("position, section, text FROM `test_db`.`passages` WHERE id IN",
              [("aaaaaaaa-0001", "aaaaaaaa", 1, "Intro", PASSAGES[1]["text"])]),
             ("FROM `test_db`.`documents` FINAL WHERE id IN",
-             [("aaaaaaaa", "Inondations en Europe", "pdf", "rapport.pdf", date(2024, 5, 1), 2, "meta")]),
+             [("aaaaaaaa", "Inondations en Europe", "pdf", "rapport.pdf", date(2024, 5, 1), 2, "meta", ["java"])]),
         ]
         hits = b.search('assureurs "dégâts des eaux"', limit=3, doc_type="pdf", source_contains="Rapport",
                         date_min="2024", date_max="2024-06")
@@ -168,8 +168,8 @@ class TestClickHousePlumbing(unittest.TestCase):
     def test_liste_par_date(self):
         b = self.make()
         self.fake.handlers = [("FROM `test_db`.`documents` FINAL", [
-            ("aaaaaaaa", "Inondations", "pdf", "rapport.pdf", date(2024, 5, 1), "meta", 2),
-            ("bbbbbbbb", "Sans date", "text", "note.md", None, "", 1)])]
+            ("aaaaaaaa", "Inondations", "pdf", "rapport.pdf", date(2024, 5, 1), "meta", 2, ["java"]),
+            ("bbbbbbbb", "Sans date", "text", "note.md", None, "", 1, [])])]
         docs = b.list_documents(date_min="2024", order="date_asc")
         self.assertEqual([d["date"] for d in docs], ["2024-05-01", None])
         sql, params = self.fake.queries[-1]
@@ -181,12 +181,16 @@ class TestClickHousePlumbing(unittest.TestCase):
     def test_set_date_reinsere_une_version_plus_recente(self):
         b = self.make()
         self.fake.handlers = [("FROM `test_db`.`documents` FINAL WHERE id =",
-                               [("bbbbbbbb", "Sans date", "text", "note.md", "", 1, 8, "sans date note.md")])]
+                               [("bbbbbbbb", "Sans date", "text", "note.md", "", None, "", 1, 8, "sans date note.md",
+                                 ["java"], {"url": "https://x"}, "abc")])]
         self.assertTrue(b.set_date("bbbbbbbb", "2022-11"))
         table, db, cols, rows = self.fake.inserts[-1]
         self.assertEqual(table, "documents")
         self.assertEqual(rows[0][cols.index("date_pub")], date(2022, 11, 1))
         self.assertEqual(rows[0][cols.index("date_origine")], "manuel")
+        self.assertEqual(rows[0][cols.index("themes")], ["java"])             # thèmes et métadonnées conservés
+        self.assertEqual(rows[0][cols.index("meta")], {"url": "https://x"})
+        self.assertEqual(rows[0][cols.index("content_sha256")], "abc")
         self.assertFalse(self.make().set_date("zzzzzzzz", "2022"))
 
     def test_tracer(self):

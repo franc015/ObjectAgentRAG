@@ -142,5 +142,6 @@ class MemoryBackend(SearchBackend):
             d["date"], d["date_origine"] = iso, origin
             if self.data_dir:
                 with open(self.data_dir / "documents.json", "w", encoding="utf-8") as f:
-                    json.dump(list(self.docs.values()), f, ensure_ascii=False, indent=1)
+                    json.dump([{k: v for k, v in d.items() if k != "markdown"} for d in self.docs.values()],
+                              f, ensure_ascii=False, indent=1)
         return True
