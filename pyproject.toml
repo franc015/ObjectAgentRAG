@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentic-search"
+version = "0.1.0"
+description = "Service de recherche textuelle agentique (lexicale) : ingestion PDF/Word/EPUB/web, moteur mémoire ou ClickHouse, agent via API de modèle."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pypdf",
+    "python-docx",
+    "beautifulsoup4",
+    "lxml",
+    "requests",
+]
+
+[project.optional-dependencies]
+clickhouse = ["clickhouse-connect"]
+web = ["trafilatura"]
+all = ["clickhouse-connect", "trafilatura"]
+
+[project.scripts]
+agentic-search = "agentic_search.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["agentic_search*"]

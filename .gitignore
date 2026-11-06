@@ -1,0 +1,10 @@
+# données et artefacts de construction
+data/
+corpus/
+dist/
+build/
+*.egg-info/
+__pycache__/
+.venv/
+# secrets : ne jamais versionner
+.env

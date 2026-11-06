@@ -1,0 +1,51 @@
+# Variante ClickHouse : passages, postings (BM25 en SQL), documents triés par date, et traces.
+# Nécessite : pip install 'agentic-search[clickhouse]' et un serveur ClickHouse >= 26.2
+# (index de texte disponible ; une version LTS est recommandée en production).
+
+data_dir = "data"
+
+[llm]
+provider = "anthropic"
+model = "claude-sonnet-5-5"
+base_url = ""
+api_key_env = "ANTHROPIC_API_KEY"
+max_tokens = 2048
+timeout = 120
+
+[agent]
+max_turns = 8
+max_results = 5
+max_per_doc = 3
+tool_result_chars = 12000
+
+[ingest]
+passage_words = 250
+overlap_words = 40
+
+[dates]
+mode = "llm"                      # "llm" : un modèle léger lit l'en-tête/la fin du texte ; "none" : métadonnées seules
+provider = "anthropic"            # ou "openai_compat" pour un modèle local
+model = "claude-haiku-5-5"
+base_url = ""
+head_chars = 1500                 # extrait envoyé au modèle : début et fin du document
+tail_chars = 500
+
+[backend]
+kind = "clickhouse"
+
+[clickhouse]
+host = "localhost"
+port = 8123                       # interface HTTP
+username = "default"
+password_env = "CLICKHOUSE_PASSWORD"
+database = "agentic"
+secure = false
+retention_months = 12             # durée de conservation des traces
+
+[tracing]
+kind = "clickhouse"
+
+[server]
+host = "127.0.0.1"
+port = 8080
+token_env = "AGENTIC_API_TOKEN"

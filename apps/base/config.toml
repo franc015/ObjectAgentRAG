@@ -1,0 +1,43 @@
+# Configuration de base : tout en local, sans ClickHouse.
+# Copiez ce fichier et adaptez-le ; chaque valeur peut aussi être surchargée par une variable
+# d'environnement (voir README.md).
+
+data_dir = "data"
+
+[llm]
+provider = "anthropic"            # "anthropic" ou "openai_compat" (serveur de modèle local)
+model = "claude-sonnet-5-5"       # comparez avec claude-haiku-5-5 sur vos questions de test
+base_url = ""                     # vide = adresse officielle ; pour un modèle local, par exemple
+                                  # "http://localhost:11434/v1" (Ollama) ou "http://localhost:8000/v1" (vLLM)
+api_key_env = "ANTHROPIC_API_KEY" # nom de la variable d'environnement qui contient la clé
+max_tokens = 2048
+timeout = 120
+
+[agent]
+max_turns = 8                     # garde-fou : nombre maximal d'allers-retours avec le modèle
+max_results = 5
+max_per_doc = 3                   # évite qu'un seul livre noie les résultats
+tool_result_chars = 12000
+
+[ingest]
+passage_words = 250
+overlap_words = 40
+
+[dates]
+mode = "llm"                      # "llm" : un modèle léger lit l'en-tête/la fin du texte ; "none" : métadonnées seules
+provider = "anthropic"            # ou "openai_compat" pour un modèle local
+model = "claude-haiku-5-5"
+base_url = ""
+head_chars = 1500                 # extrait envoyé au modèle : début et fin du document
+tail_chars = 500
+
+[backend]
+kind = "memory"                   # "memory" (base) ou "clickhouse"
+
+[tracing]
+kind = "jsonl"                    # "none", "jsonl" (fichiers dans data/traces) ou "clickhouse"
+
+[server]
+host = "127.0.0.1"
+port = 8080
+token_env = "AGENTIC_API_TOKEN"   # si cette variable est définie, le jeton est exigé (Authorization: Bearer ...)

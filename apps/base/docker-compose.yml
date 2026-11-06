@@ -1,0 +1,19 @@
+# Application « base ». Depuis ce dossier :
+#   cp .env.example .env     # puis renseigner ANTHROPIC_API_KEY (et AGENTIC_API_TOKEN)
+#   docker compose run --rm -v ../../corpus:/corpus agentic ingest /corpus
+#   docker compose up -d agentic
+services:
+  agentic:
+    build:
+      context: ../..
+      dockerfile: apps/base/Dockerfile
+    image: objectagentrag-base
+    env_file: .env
+    volumes:
+      - agentic-data:/data
+    ports:
+      - "127.0.0.1:8080:8080"        # à exposer derrière un proxy inverse avec TLS si besoin
+    restart: unless-stopped
+
+volumes:
+  agentic-data:
